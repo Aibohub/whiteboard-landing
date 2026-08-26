@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && node scripts/build-sites-worker.mjs",
     "build:knowledge": "node scripts/build-apps-script-knowledge.mjs",
     "validate:apps-script": "node scripts/validate-apps-script.mjs",
     "test:contracts": "node scripts/test-apps-script-contracts.mjs",
