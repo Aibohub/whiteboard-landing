@@ -1,0 +1,26 @@
+{
+  "name": "whiteboard-business-video-landing",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc -b && vite build",
+    "build:knowledge": "node scripts/build-apps-script-knowledge.mjs",
+    "validate:apps-script": "node scripts/validate-apps-script.mjs",
+    "test:contracts": "node scripts/test-apps-script-contracts.mjs",
+    "preview": "vite preview --host 127.0.0.1"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.7"
+  },
+  "devDependencies": {
+    "@openai/sites-vite-plugin": "^0.2.0",
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2"
+  }
+}
