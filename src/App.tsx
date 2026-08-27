@@ -1853,10 +1853,54 @@ function renderChatInline(text: string) {
   );
 }
 
+function normalizeAssistantText(content: string) {
+  const lines = content
+    .replace(/\r\n/g, "\n")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const normalized: string[] = [];
+  let paragraph: string[] = [];
+
+  const flushParagraph = () => {
+    if (!paragraph.length) return;
+    normalized.push(paragraph.join(" "));
+    paragraph = [];
+  };
+
+  for (const line of lines) {
+    if (line === ":") {
+      if (paragraph.length) {
+        paragraph[paragraph.length - 1] = `${paragraph[paragraph.length - 1]}:`;
+      } else if (normalized.length) {
+        normalized[normalized.length - 1] = `${normalized[normalized.length - 1]}:`;
+      }
+      continue;
+    }
+
+    const isListItem = /^([-*]|\d+[.)])\s+/.test(line);
+    const isShortHeading = line.endsWith(":") && line.length <= 64;
+    if (isListItem || isShortHeading) {
+      flushParagraph();
+      normalized.push(line);
+      continue;
+    }
+
+    paragraph.push(line);
+    if (/[.!?。؟)]$/.test(line) || paragraph.join(" ").length > 220) {
+      flushParagraph();
+    }
+  }
+
+  flushParagraph();
+  return normalized.join("\n");
+}
+
 function ChatMessageContent({ content }: { content: string }) {
+  const readableContent = normalizeAssistantText(content);
   return (
     <span className="chat-message-content">
-      {content.split("\n").map((line, index) => {
+      {readableContent.split("\n").map((line, index) => {
         const bullet = /^[-*]\s+/.test(line);
         const cleanLine = bullet ? line.replace(/^[-*]\s+/, "") : line;
         return (

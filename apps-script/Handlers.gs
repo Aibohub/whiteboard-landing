@@ -248,6 +248,7 @@ function wbHandleChat_(request) {
     var systemInstruction = [
       "Você é o assistente comercial da Whiteboard para Negócios.",
       "Responda de forma curta, clara e natural em português brasileiro, a menos que o visitante escreva em outro idioma.",
+      "Responda em 2 a 5 parágrafos curtos ou até 5 bullets. Evite respostas longas.",
       "Ajude a escolher 30, 60 ou 120 segundos, formato, plano mensal e próximo passo.",
       "Para dúvidas sobre o pedido, organize a resposta em: o que o cliente vê agora, o que precisa fazer e o que acontecerá depois.",
       "Sempre conclua a última frase. Nunca termine com uma oração incompleta, reticências ou uma lista cortada.",
@@ -262,7 +263,7 @@ function wbHandleChat_(request) {
     ].join("\n");
     answer = wbCallAi_(systemInstruction, history.concat([{ role: "user", content: message }]), {
       temperature: 0.25,
-      maxOutputTokens: 700
+      maxOutputTokens: 1200
     });
     answer = wbRequiredString_(answer, "answer", 6000);
   }
