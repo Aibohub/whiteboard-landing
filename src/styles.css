@@ -2487,6 +2487,43 @@ li {
   text-transform: none;
 }
 
+.chat-message-actions {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+  border-top: 1px dashed rgba(21, 20, 17, 0.18);
+  padding-top: 8px;
+}
+
+.chat-message-actions > span {
+  color: var(--teal-dark);
+  font-size: 0.68rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.chat-message-actions > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chat-message-actions button {
+  border: 1px solid var(--teal-dark);
+  border-radius: 999px;
+  background: var(--white);
+  color: var(--teal-dark);
+  font-size: 0.74rem;
+  font-weight: 900;
+  line-height: 1.1;
+  padding: 7px 10px;
+}
+
+.chat-message-actions button:hover,
+.chat-message-actions button:focus-visible {
+  background: rgba(24, 169, 87, 0.12);
+}
+
 .chat-message.user {
   justify-self: end;
   background: rgba(22, 94, 185, 0.1);

@@ -1815,6 +1815,11 @@ type ChatUiMessage = {
   content: string;
 };
 
+type ChatCta = {
+  label: string;
+  path: string;
+};
+
 const chatHistoryStorageKey = "whiteboard_chat_history_v1";
 const chatWelcomeMessage: ChatUiMessage = {
   id: "welcome",
@@ -1916,6 +1921,31 @@ function normalizeAssistantText(content: string) {
   return normalized.join("\n");
 }
 
+function getChatCtas(content: string): ChatCta[] {
+  const lower = content.toLowerCase();
+  const hasOrderContext = /order id|pedido|status|suporte|support|заказ|статус|поддержк|email/.test(lower);
+  const hasBuyingContext = /brief|checkout|pagamento|preço|pacote|plano mensal|duração|segundos|formato|garantia|оплат|цен|стоим|пакет|длительн|секунд|формат|гарант/.test(lower);
+
+  if (hasOrderContext) {
+    return [
+      { label: "Consultar pedido", path: routes.support },
+      { label: "Começar novo pedido", path: routes.brief },
+    ];
+  }
+
+  if (hasBuyingContext) {
+    return [
+      { label: "Começar brief", path: routes.brief },
+      { label: "Ver pacotes", path: `${routes.home}#pacotes` },
+    ];
+  }
+
+  return [
+    { label: "Começar brief", path: routes.brief },
+    { label: "Ver demos", path: `${routes.home}#demos` },
+  ];
+}
+
 function ChatMessageContent({ content }: { content: string }) {
   const readableContent = normalizeAssistantText(content);
   return (
@@ -1977,6 +2007,22 @@ function ChatWidget({ open, onOpenChange }: { open: boolean; onOpenChange: (open
     window.localStorage.removeItem(chatHistoryStorageKey);
   }
 
+  function followChatCta(path: string, label: string) {
+    onOpenChange(false);
+    trackEvent("chat_message", { source_widget: aiChatWidgetChoice.widget, chat_cta: label });
+    if (path.includes("#")) {
+      window.history.pushState({}, "", toBrowserPath(path));
+      window.dispatchEvent(new PopStateEvent("popstate"));
+      window.setTimeout(() => {
+        const hash = path.split("#")[1];
+        const target = hash ? document.getElementById(hash) : null;
+        target?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 0);
+      return;
+    }
+    routeTo(path);
+  }
+
   return (
     <div className={`chat-widget ${open ? "open" : ""}`}>
       {open && (
@@ -1993,10 +2039,26 @@ function ChatWidget({ open, onOpenChange }: { open: boolean; onOpenChange: (open
           </div>
           <div className="chat-messages" aria-live="polite">
             {messages.map((message) => (
-              <p className={`chat-message ${message.role}`} key={message.id}>
+              <div className={`chat-message ${message.role}`} key={message.id}>
                 <span className="chat-message-label">{message.role === "user" ? "Você" : "Assistente"}</span>
                 <ChatMessageContent content={message.content} />
-              </p>
+                {message.role === "assistant" && (
+                  <div className="chat-message-actions" aria-label="Próximo passo sugerido">
+                    <span>Próximo passo</span>
+                    <div>
+                      {getChatCtas(message.content).map((action) => (
+                        <button
+                          type="button"
+                          key={`${message.id}-${action.label}`}
+                          onClick={() => followChatCta(action.path, action.label)}
+                        >
+                          {action.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             ))}
             {sending && <p className="chat-message assistant chat-thinking">Analisando sua pergunta...</p>}
             {error && <p className="chat-error" role="alert">{error}</p>}
