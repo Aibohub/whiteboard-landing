@@ -73,6 +73,9 @@ const cache = new Map();
 let aiGenerationCalls = 0;
 let requestSequence = 0;
 let forcedProviderFailures = 0;
+let lastPreferenceOrderId = "";
+let lastPreferenceAmount = 0;
+const sentEmails = [];
 globalThis.SpreadsheetApp = {
   getActiveSpreadsheet: () => spreadsheet,
   openById: () => spreadsheet,
@@ -100,6 +103,38 @@ globalThis.Utilities = {
 };
 globalThis.UrlFetchApp = {
   fetch: (url, options) => {
+    if (url.includes("api.mercadopago.com/checkout/preferences")) {
+      assert(options.headers.Authorization === "Bearer TEST-MP-TOKEN", "Mercado Pago token must stay in backend headers");
+      const payload = JSON.parse(options.payload);
+      lastPreferenceOrderId = payload.external_reference;
+      lastPreferenceAmount = payload.items[0].unit_price;
+      assert(payload.notification_url.endsWith("?webhook=mercadopago"), "payment preference must include webhook URL");
+      return {
+        getResponseCode: () => 201,
+        getContentText: () => JSON.stringify({
+          id: "PREF-123",
+          init_point: "https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=PREF-123",
+          sandbox_init_point: "https://sandbox.mercadopago.com.br/checkout/v1/redirect?pref_id=PREF-123",
+        }),
+      };
+    }
+    if (url.includes("api.mercadopago.com/v1/payments/")) {
+      assert(options.headers.Authorization === "Bearer TEST-MP-TOKEN", "Mercado Pago payment lookup must use backend token");
+      return {
+        getResponseCode: () => 200,
+        getContentText: () => JSON.stringify({
+          id: 987654,
+          status: "approved",
+          external_reference: lastPreferenceOrderId,
+          transaction_amount: lastPreferenceAmount,
+          currency_id: "BRL",
+          payment_method_id: "pix",
+          payment_type_id: "bank_transfer",
+          preference_id: "PREF-123",
+          date_approved: "2026-08-25T16:30:00.000-03:00",
+        }),
+      };
+    }
     if (forcedProviderFailures > 0) {
       forcedProviderFailures -= 1;
       return {
@@ -134,8 +169,11 @@ globalThis.UrlFetchApp = {
     };
   },
 };
+globalThis.MailApp = {
+  sendEmail: (message) => sentEmails.push(message),
+};
 
-for (const file of ["Config.gs", "Contracts.gs", "Sheets.gs", "Knowledge.gs", "AI.gs", "Handlers.gs", "VideoWorker.gs"]) {
+for (const file of ["Config.gs", "Contracts.gs", "Sheets.gs", "Knowledge.gs", "AI.gs", "Email.gs", "VideoWorker.gs", "Payments.gs", "Handlers.gs"]) {
   vm.runInThisContext(readFileSync(join(sourceDir, file), "utf8"), { filename: file });
 }
 
@@ -145,6 +183,11 @@ assert(wbSafeCell_("=IMPORTDATA(\"https://example.com\")").startsWith("'="), "sh
 properties.set("LLM_PROVIDER", "gemini");
 properties.set("LLM_API_KEY", "TEST-KEY");
 properties.set("LLM_MODEL", "gemini-test");
+properties.set("MERCADO_PAGO_ACCESS_TOKEN", "TEST-MP-TOKEN");
+properties.set("MERCADO_PAGO_USE_SANDBOX", "false");
+properties.set("SITE_BASE_URL", "https://aibohub.github.io/whiteboard-landing");
+properties.set("WEBAPP_URL", "https://script.google.com/macros/s/test/exec");
+properties.set("STUDIO_NOTIFICATION_EMAIL", "studio@example.com");
 assert(checkAiConfig().configured === true, "AI config check must not expose the API key");
 
 const generated = wbDispatch_(request("generate_roteiro", {
@@ -375,10 +418,28 @@ let serverOrder = wbFindRecord_("ORDERS", "Order_ID", order.orderId);
 assert(serverOrder.Price === "1321", "server must calculate price instead of trusting frontend total");
 assert(wbListRecords_("VIDEOS").filter((video) => video.Order_ID === order.orderId).length === 4, "monthly order must create four video records");
 assert(wbFindRecord_("VIDEOS", "Video_ID", `${order.orderId}-V02`).Script_Status === "WAITING_PAYMENT", "remaining scripts must wait for payment");
+assert(sentEmails.some((email) => email.subject.includes(order.orderId)), "create_order must send an order email");
+
+const payment = wbDispatch_(request("create_payment", {
+  orderId: order.orderId,
+  method: "PIX",
+  returnBaseUrl: "https://aibohub.github.io/whiteboard-landing",
+}));
+assert(payment.checkoutLink.includes("mercadopago.com.br"), "create_payment must return a Mercado Pago checkout link");
+assert(payment.paymentStatus === "PAYMENT_PENDING", "new payment preferences must keep order pending");
+assert(wbFindRecord_("PAYMENTS", "Payment_ID", "PREF-PREF-123").Payment_Status === "PAYMENT_PENDING", "payment preference must be logged");
+
+const webhook = wbDispatch_(request("payment_webhook", {
+  provider: "mercadopago",
+  body: { type: "payment", data: { id: "987654" } },
+  params: {},
+}));
+assert(webhook.accepted === true && webhook.paymentStatus === "PAID", "payment_webhook must verify and accept approved payment");
+serverOrder = wbFindRecord_("ORDERS", "Order_ID", order.orderId);
+assert(serverOrder.Payment_Status === "PAID", "payment webhook must mark order as paid");
+assert(serverOrder.Order_Status === "SCRIPT_GENERATION_PENDING", "paid monthly order must enter script generation");
 
 wbPatchRecord_("ORDERS", "Order_ID", order.orderId, {
-  Payment_Status: "PAID",
-  Order_Status: "SCRIPT_GENERATION_PENDING",
   Final_Video_Link: "https://example.com/final.mp4",
 });
 
@@ -473,15 +534,9 @@ assert(savedOrder.Review_Received === "true", "feedback must update Review_Recei
 assert(savedOrder.Testimonial_Allowed === "true", "feedback must update testimonial permission");
 assert(savedOrder.Portfolio_Allowed === "false", "testimonial and video permissions must remain separate");
 
-let deferredError = null;
-try {
-  wbDispatch_(request("create_payment", { orderId: order.orderId, method: "PIX" }));
-} catch (error) {
-  deferredError = error;
-}
-assert(deferredError?.wbCode === "NOT_IMPLEMENTED", "deferred actions must fail with a stable contract error");
+assert(sentEmails.some((email) => email.subject.includes("Pagamento confirmado")), "payment webhook must send confirmation email");
 
-console.log("Apps Script contract flow passed: setup, 6 brief combinations, removed reference mode, dynamic text limits, visible rate limit, idempotent AI, monthly video worker, chat, order, privacy lookup, ticket and feedback.");
+console.log("Apps Script contract flow passed: setup, 6 brief combinations, removed reference mode, dynamic text limits, visible rate limit, idempotent AI, Mercado Pago payment/webhook, email notifications, monthly video worker, chat, order, privacy lookup, ticket and feedback.");
 
 function request(action, payload) {
   requestSequence += 1;

@@ -119,10 +119,15 @@ function wbRefreshOrderScriptStatus_(orderId) {
     return video.Script_Status === "READY_FOR_REVIEW" || video.Script_Status === "CLIENT_APPROVED";
   });
   if (allReady) {
+    var order = wbFindRecord_("ORDERS", "Order_ID", orderId);
+    var wasAlreadyReady = order && order.Scripts_Status === "SCRIPT_REVIEW";
     wbPatchRecord_("ORDERS", "Order_ID", orderId, {
       Scripts_Status: "SCRIPT_REVIEW",
       Order_Status: "SCRIPT_REVIEW",
       Updated_At: wbNow_()
     });
+    if (!wasAlreadyReady) {
+      wbSendOrderEmail_("scripts_ready", wbFindRecord_("ORDERS", "Order_ID", orderId), {}, "SCRIPTS-READY-" + orderId);
+    }
   }
 }

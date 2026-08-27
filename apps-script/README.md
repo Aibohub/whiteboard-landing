@@ -1,6 +1,6 @@
 # Google Apps Script CRM
 
-This directory contains the `v1` Web App backend for structured VO generation, monthly editorial plans, sales chat, orders, briefs, video records, tickets, feedback and status lookup.
+This directory contains the `v1` Web App backend for structured VO generation, monthly editorial plans, Mercado Pago checkout, payment webhooks, email notifications, sales chat, orders, briefs, video records, tickets, feedback and status lookup.
 
 ## Recommended setup
 
@@ -8,14 +8,48 @@ This directory contains the `v1` Web App backend for structured VO generation, m
 2. In the Sheet, open `Extensions -> Apps Script`.
 3. Create Apps Script files matching the files in this directory and paste their contents.
 4. Open Project Settings, enable the manifest editor and replace `appsscript.json`.
-5. Run `setupCrm()` once from the Apps Script editor and approve the Sheets permission.
+5. Run `setupCrm()` once from the Apps Script editor and approve the Sheets, external request and email permissions.
 6. Confirm that nine tabs were created: `ORDERS`, `PAYMENTS`, `BRIEFS`, `VIDEOS`, `TICKETS`, `FEEDBACK`, `CHAT_LOGS`, `EMAIL_LOG`, `EVENTS`.
 7. Choose `Deploy -> New deployment -> Web app`.
 8. Set `Execute as: Me` and choose the audience required for the public landing page.
 9. Copy the production URL ending in `/exec`.
 10. Add it to the site `.env` as `VITE_APPS_SCRIPT_ENDPOINT` and rebuild the site.
 
-When updating an existing project, create and paste `VideoWorker.gs`, replace the changed `.gs` files, and run `setupCrm()` again. It adds the `VIDEOS` tab and new columns without deleting existing CRM rows. Replace the manifest when its scopes change.
+When updating an existing project, create and paste `Payments.gs` and `Email.gs`, replace the changed `.gs` files, and run `setupCrm()` again. It adds new columns without deleting existing CRM rows. Replace the manifest when its scopes change.
+
+## Mercado Pago configuration
+
+Keep the Mercado Pago access token in Apps Script Properties, never in the site `.env`.
+
+Add these Script Properties:
+
+```text
+MERCADO_PAGO_ACCESS_TOKEN=your_private_access_token
+MERCADO_PAGO_USE_SANDBOX=false
+SITE_BASE_URL=https://your-public-site.com
+WEBAPP_URL=https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec
+STUDIO_NOTIFICATION_EMAIL=your-contact-email@example.com
+```
+
+For sandbox tests, use a Mercado Pago test access token and set:
+
+```text
+MERCADO_PAGO_USE_SANDBOX=true
+```
+
+Webhook URL for Mercado Pago:
+
+```text
+https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec?webhook=mercadopago
+```
+
+Recommended Mercado Pago event:
+
+```text
+Payment
+```
+
+`create_payment` creates a Checkout Pro preference and returns the hosted Mercado Pago checkout link. `payment_webhook` receives the payment notification, fetches the payment from Mercado Pago by ID, verifies the order reference and amount, updates `PAYMENTS` and `ORDERS`, queues monthly VO generation and sends email notifications.
 
 ## Monthly script lifecycle
 
@@ -24,7 +58,7 @@ Before payment, the API returns exactly 4 or 8 editable editorial topics and the
 - video 1: `APPROVED_PREPAYMENT`;
 - remaining videos: `WAITING_PAYMENT`.
 
-After the payment provider has set the parent order to `Payment_Status = PAID`, the background worker queues and generates the remaining VO texts one at a time. It never generates storyboard or scene directions.
+After Mercado Pago confirms the parent order as `Payment_Status = PAID`, the webhook queues the remaining monthly VO texts. The background worker then generates them one at a time. It never generates storyboard or scene directions.
 
 To activate the worker in Apps Script:
 
@@ -33,7 +67,19 @@ To activate the worker in Apps Script:
 3. Choose `Time-driven` and an interval such as every minute.
 4. Approve the requested permissions.
 
-The worker ignores unpaid orders. A future verified payment webhook may also call `wbQueueRemainingScripts_(orderId)` immediately; the time trigger remains a recovery mechanism.
+The worker ignores unpaid orders. The verified payment webhook calls `wbQueueRemainingScripts_(orderId)` immediately; the time trigger remains a recovery mechanism.
+
+## Email notifications
+
+Emails are sent through `MailApp` and logged in `EMAIL_LOG`.
+
+Automatic templates:
+
+- `order_created`: after the order is saved before payment;
+- `payment_link_created`: after the Mercado Pago checkout link is created;
+- `payment_confirmed`: after Mercado Pago verifies an approved payment;
+- `payment_status_changed`: failed, cancelled or refunded payment updates;
+- `scripts_ready`: when all remaining monthly VOs are ready for review.
 
 The preview generation also creates a compact `Source_Digest` from the written brief. It is saved with the approved topics and first VO, then reused by the worker for every remaining monthly script. The worker never fetches an external document after payment.
 
@@ -132,4 +178,4 @@ Saving source code does not update an existing production deployment automatical
 
 ## Security boundary
 
-This is a public form endpoint, not an authenticated client portal. It validates data, limits field size, applies a basic per-session AI throttle, prevents formula injection, blocks private reference URLs and protects status/ticket/feedback actions with Order ID plus email. Before paid traffic, add an anti-abuse layer such as Turnstile or a proxy with stronger rate limiting.
+This is a public form endpoint, not an authenticated client portal. It validates data, limits field size, applies a basic per-session AI throttle, prevents formula injection and protects status/ticket/feedback actions with Order ID plus email. Payment status is verified by fetching the payment from Mercado Pago instead of trusting the webhook body alone. Before paid traffic, add an anti-abuse layer such as Turnstile or a proxy with stronger rate limiting.

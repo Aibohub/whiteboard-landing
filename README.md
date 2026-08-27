@@ -28,8 +28,8 @@ WhatsApp is not part of the main sales, support, checkout, status or footer flow
 
 - `/` landing page
 - `/brief` package brief, flexible input and roteiro approval
-- `/checkout` order summary and Mercado Pago-ready payment step
-- `/order-success` confirmation after payment test
+- `/checkout` order summary and Mercado Pago checkout redirect
+- `/order-success` confirmation after Mercado Pago return
 - `/support` ticket form and order lookup by Order ID + email
 - `/feedback` feedback form with separate portfolio permissions
 
@@ -64,42 +64,43 @@ Implemented now:
 create_brief
 generate_roteiro
 create_order
+create_payment
+payment_webhook
 lookup_order
+get_video_scripts
+approve_video_scripts
 create_ticket
 create_feedback
 chat
 log_chat
 log_event
-```
-
-Reserved in the contract for the next mini-iteration:
-
-```text
-create_payment
-payment_webhook
 send_email
 ```
 
-When `VITE_APPS_SCRIPT_ENDPOINT` is configured, AI roteiro, chat, orders, status lookup, tickets and feedback use Apps Script. Without it, the site keeps a local roteiro fallback for layout testing; AI chat stays unavailable.
+When `VITE_APPS_SCRIPT_ENDPOINT` is configured, AI roteiro, chat, orders, payments, status lookup, tickets and feedback use Apps Script. Without it, the site keeps a local roteiro and payment fallback for layout testing; AI chat stays unavailable.
 
 See `apps-script/README.md` for deployment and `docs/API_CONTRACT_V1.md` for request and response contracts. The Google Sheets ID is kept in Apps Script Properties and is not exposed to the frontend.
 
 ## Mercado Pago
 
-Frontend only prepares the checkout step and public key placeholder.
+Frontend asks Apps Script to create a Mercado Pago Checkout Pro preference and redirects the client to the hosted Mercado Pago checkout link.
 
-Required secure backend behavior:
+Payment flow:
 
 ```text
 approved roteiro
 → create Order ID with PAYMENT_PENDING
 → create Mercado Pago preference in backend
 → redirect to checkout link
-→ webhook updates PAID / FAILED / CANCELLED / REFUNDED
+→ Mercado Pago webhook reaches Apps Script
+→ Apps Script fetches and verifies the payment
 → Google Sheets updates order/payment rows
+→ monthly remaining VOs are queued after PAID
+→ status emails are sent
 ```
 
 Never expose Mercado Pago access token in frontend.
+`VITE_MERCADO_PAGO_PUBLIC_KEY` is optional and unused while Checkout Pro redirect is used.
 
 ## Google Sheets CRM
 
@@ -250,7 +251,6 @@ Production build is generated in `dist/`.
 
 ## Remaining TODOs
 
-- Add real Mercado Pago checkout preference creation.
-- Add payment webhook.
-- Send official status emails.
+- Configure production Mercado Pago credentials.
+- Deploy to VPS and attach the production domain.
 - Add real social links and email/contact once ready.

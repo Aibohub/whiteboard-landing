@@ -34,6 +34,7 @@ import {
 import {
   createFeedback,
   createOrder,
+  createPayment,
   createTicket,
   approveVideoScripts,
   calculateOrderPricing,
@@ -43,7 +44,6 @@ import {
   getPackage,
   getVideoScripts,
   lookupOrder,
-  markOrderPaid,
 } from "./salesFlow";
 import { getChatSessionId, sendAiChatMessage } from "./aiFlow";
 import { ApiClientError } from "./apiClient";
@@ -55,6 +55,7 @@ import type {
   PlanId,
   RoteiroGeneration,
   VideoScriptReview,
+  PaymentMethod,
 } from "./salesFlow";
 import type { AiRateLimitStatus, SafeOrderStatus } from "./apiContracts";
 
@@ -117,8 +118,32 @@ const paymentStatusLabels: Record<string, string> = {
   REFUNDED: "Reembolsado",
 };
 
+const appBasePath = normalizeBasePath(import.meta.env.BASE_URL ?? "/");
+
+function normalizeBasePath(value: string) {
+  if (!value || value === "/") return "";
+  return `/${value.replace(/^\/+|\/+$/g, "")}`;
+}
+
+function toBrowserPath(path: string) {
+  if (/^https?:\/\//i.test(path)) return path;
+  return `${appBasePath}${path}`;
+}
+
+function currentRoutePath() {
+  const pathname = window.location.pathname;
+  if (appBasePath && pathname === appBasePath) return "/";
+  return appBasePath && pathname.startsWith(`${appBasePath}/`)
+    ? pathname.slice(appBasePath.length) || "/"
+    : pathname;
+}
+
+function publicReturnBaseUrl() {
+  return `${window.location.origin}${appBasePath}`;
+}
+
 function routeTo(path: string) {
-  window.history.pushState({}, "", path);
+  window.history.pushState({}, "", toBrowserPath(path));
   window.dispatchEvent(new PopStateEvent("popstate"));
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -145,7 +170,7 @@ function PrimaryLink({
   return (
     <a
       className={`cta ${className}`}
-      href={href}
+      href={toBrowserPath(href)}
       onClick={(event) => {
         event.preventDefault();
         onClick?.();
@@ -1311,21 +1336,30 @@ function BriefPage({ onChatOpen }: { onChatOpen: () => void }) {
 
 function CheckoutPage({ onChatOpen }: { onChatOpen: () => void }) {
   const [order, setOrder] = useState<OrderRecord | null>(() => getOrder(getQueryParam("order")));
-  const [method, setMethod] = useState<"PIX" | "Cartão">("PIX");
+  const [method, setMethod] = useState<PaymentMethod>("PIX");
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [paymentError, setPaymentError] = useState("");
 
-  function handlePayment() {
+  async function handlePayment() {
     if (!order) {
       return;
     }
 
-    const updated = markOrderPaid(order);
-    setOrder(updated);
-    trackEvent("checkout_payment_click", {
-      order_id: updated.orderId,
-      payment_method: method,
-      payment_status: updated.paymentStatus,
-    });
-    routeTo(`${routes.orderSuccess}?order=${updated.orderId}`);
+    setPaymentLoading(true);
+    setPaymentError("");
+    try {
+      const payment = await createPayment(order, method, publicReturnBaseUrl());
+      trackEvent("checkout_payment_click", {
+        order_id: payment.orderId,
+        payment_method: method,
+        payment_status: payment.paymentStatus,
+      });
+      window.location.assign(payment.checkoutLink);
+    } catch (error) {
+      setPaymentError(getUserError(error));
+    } finally {
+      setPaymentLoading(false);
+    }
   }
 
   return (
@@ -1378,14 +1412,19 @@ function CheckoutPage({ onChatOpen }: { onChatOpen: () => void }) {
               </p>
               <label>
                 Método
-                <select value={method} onChange={(event) => setMethod(event.target.value as "PIX" | "Cartão")}>
+                <select value={method} onChange={(event) => setMethod(event.target.value as PaymentMethod)}>
                   <option value="PIX">PIX</option>
                   <option value="Cartão">Cartão</option>
                 </select>
               </label>
-              <button className="cta" type="button" onClick={handlePayment}>
-                Confirmar pagamento
+              {paymentError && <p className="form-error" role="alert">{paymentError}</p>}
+              <button className="cta" type="button" onClick={handlePayment} disabled={paymentLoading}>
+                {paymentLoading ? "Criando checkout..." : "Ir para Mercado Pago"}
               </button>
+              <p className="form-note">
+                O pagamento é finalizado no ambiente seguro do Mercado Pago. O pedido muda de status
+                automaticamente quando a confirmação chegar.
+              </p>
             </form>
           </>
         )}
@@ -1977,10 +2016,10 @@ function Footer() {
 }
 
 function Router({ onChatOpen }: { onChatOpen: () => void }) {
-  const [path, setPath] = useState(window.location.pathname);
+  const [path, setPath] = useState(currentRoutePath());
 
   useEffect(() => {
-    const onPopState = () => setPath(window.location.pathname);
+    const onPopState = () => setPath(currentRoutePath());
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
   }, []);

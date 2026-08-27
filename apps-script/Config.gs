@@ -6,6 +6,11 @@ var WB_LLM_PROVIDER_PROPERTY = "LLM_PROVIDER";
 var WB_LLM_API_KEY_PROPERTY = "LLM_API_KEY";
 var WB_LLM_MODEL_PROPERTY = "LLM_MODEL";
 var WB_LLM_BASE_URL_PROPERTY = "LLM_BASE_URL";
+var WB_MP_ACCESS_TOKEN_PROPERTY = "MERCADO_PAGO_ACCESS_TOKEN";
+var WB_MP_USE_SANDBOX_PROPERTY = "MERCADO_PAGO_USE_SANDBOX";
+var WB_SITE_BASE_URL_PROPERTY = "SITE_BASE_URL";
+var WB_WEBAPP_URL_PROPERTY = "WEBAPP_URL";
+var WB_STUDIO_EMAIL_PROPERTY = "STUDIO_NOTIFICATION_EMAIL";
 var WB_AI_HISTORY_LIMIT = 10;
 var WB_AI_MESSAGE_LIMIT = 2400;
 var WB_AI_GENERATION_MESSAGE_LIMIT = 30000;
@@ -51,8 +56,9 @@ var WB_SHEETS = {
     "Request_ID"
   ],
   PAYMENTS: [
-    "Payment_ID", "Order_ID", "Created_At", "Provider", "Amount", "Currency",
-    "Payment_Status", "Payment_Method", "Checkout_Link", "Paid_At", "Raw_Response", "Request_ID"
+    "Payment_ID", "Order_ID", "Created_At", "Updated_At", "Provider", "Preference_ID", "Provider_Payment_ID",
+    "Amount", "Currency", "Payment_Status", "Provider_Status", "Payment_Method", "Checkout_Link", "Paid_At",
+    "Raw_Response", "Request_ID"
   ],
   BRIEFS: [
     "Brief_ID", "Order_ID", "Created_At", "Client_Name", "Email", "Package", "Plan", "Niche",

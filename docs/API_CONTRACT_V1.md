@@ -50,22 +50,17 @@ The frontend and Google Apps Script communicate through one `POST` endpoint. The
 
 - `health`: reports service version and whether the spreadsheet is configured.
 - `create_brief`: writes a standalone brief to `BRIEFS`.
-- `generate_roteiro`: validates the brief, reads a bounded public reference when provided and generates a duration-aware roteiro through the configured LLM.
+- `generate_roteiro`: validates the written brief and generates a duration-aware VO preview through the configured LLM.
 - `create_order`: upserts `ORDERS` and its matching `BRIEFS` row.
+- `create_payment`: creates a Mercado Pago Checkout Pro preference for an existing `PAYMENT_PENDING` order and returns the hosted checkout link.
+- `payment_webhook`: receives Mercado Pago notifications, fetches the payment from Mercado Pago, verifies the Order ID and amount, then updates `PAYMENTS` and `ORDERS`.
 - `lookup_order`: returns a safe status subset only when Order ID and email match.
 - `create_ticket`: validates order ownership and upserts `TICKETS`.
 - `create_feedback`: validates order ownership, writes `FEEDBACK` and updates independent portfolio/testimonial permissions in `ORDERS`.
 - `chat`: answers from the Markdown knowledge base and logs user/assistant messages to `CHAT_LOGS`.
 - `log_chat`: stores a validated individual chat message.
 - `log_event`: appends a structured event to `EVENTS`.
-
-## Reserved for the next mini-iteration
-
-- `create_payment`
-- `payment_webhook`
-- `send_email`
-
-These actions return `NOT_IMPLEMENTED` until their secure integrations are added.
+- `send_email`: protected utility for order-owned email notifications.
 
 ## AI payloads
 
@@ -103,7 +98,38 @@ Order status is never inferred by the LLM. When a chat message contains both Ord
 - Cell values beginning with `=`, `+`, `-` or `@` are escaped before writing to Sheets.
 - Feedback permission for a testimonial is stored separately from permission to show the client video.
 - LLM keys, Mercado Pago access tokens and the Google Sheets ID do not belong in frontend variables.
-- AI credentials are read only from Apps Script Properties. Public reference URLs are HTTPS-only and private/local network addresses are rejected.
-- Public PDF ingestion is limited to 4 MB and is available with the Gemini provider. Public Google Docs and text/HTML pages are reduced to bounded text context.
+- AI credentials are read only from Apps Script Properties.
+- Mercado Pago credentials are read only from Apps Script Properties. The frontend receives only the hosted checkout link, never the access token.
+- The public MVP does not fetch PDFs, Google Drive files or external websites. All source facts must be pasted into the written brief and approved before checkout.
+
+## Mercado Pago
+
+`create_payment` payload:
+
+```json
+{
+  "orderId": "ORD-2026-1001",
+  "method": "PIX",
+  "returnBaseUrl": "https://your-domain.com"
+}
+```
+
+Success response:
+
+```json
+{
+  "orderId": "ORD-2026-1001",
+  "checkoutLink": "https://www.mercadopago.com.br/checkout/...",
+  "preferenceId": "123456",
+  "paymentStatus": "PAYMENT_PENDING"
+}
+```
+
+Mercado Pago sends webhook notifications to the deployed Apps Script URL with `?webhook=mercadopago`.
+The webhook payload is not trusted as final payment proof. Apps Script fetches the payment by ID from Mercado Pago and verifies:
+
+- `external_reference` matches an existing `Order_ID`;
+- confirmed amount matches the server-calculated `ORDERS.Price`;
+- provider status maps to `PAID`, `FAILED`, `CANCELLED`, `REFUNDED` or `PAYMENT_PENDING`.
 
 Pricing rules currently exist in both `src/content.ts` for presentation and `apps-script/Config.gs` as the server source of truth. Update both files when a price changes; the server value is authoritative.

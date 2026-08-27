@@ -29,7 +29,7 @@ export type ApiPayloadMap = {
   create_brief: { brief: BriefFormData; generation: RoteiroGeneration };
   generate_roteiro: { brief: BriefFormData };
   create_order: { order: OrderRecord };
-  create_payment: { orderId: string; method: "PIX" | "Cartão" };
+  create_payment: { orderId: string; method: "PIX" | "Cartão"; returnBaseUrl: string };
   payment_webhook: Record<string, unknown>;
   lookup_order: { orderId: string; email: string };
   get_video_scripts: { orderId: string; email: string };
@@ -79,8 +79,8 @@ export type ApiDataMap = {
   create_brief: { briefId: string };
   generate_roteiro: { generation: RoteiroGeneration; quota: AiRateLimitStatus };
   create_order: { orderId: string; created: boolean };
-  create_payment: { orderId: string; checkoutLink: string };
-  payment_webhook: { accepted: boolean };
+  create_payment: { orderId: string; checkoutLink: string; preferenceId: string; paymentStatus: string };
+  payment_webhook: { accepted: boolean; orderId: string; paymentStatus: string };
   lookup_order: { order: SafeOrderStatus | null };
   get_video_scripts: {
     orderId: string;

@@ -9,13 +9,12 @@ function wbDispatch_(request) {
     case "approve_video_scripts": return wbHandleApproveVideoScripts_(request);
     case "create_ticket": return wbHandleCreateTicket_(request);
     case "create_feedback": return wbHandleCreateFeedback_(request);
+    case "create_payment": return wbHandleCreatePayment_(request);
+    case "payment_webhook": return wbHandlePaymentWebhook_(request);
+    case "send_email": return wbHandleSendEmail_(request);
     case "chat": return wbHandleChat_(request);
     case "log_chat": return wbHandleLogChat_(request);
     case "log_event": return wbHandleLogEvent_(request);
-    case "create_payment":
-    case "payment_webhook":
-    case "send_email":
-      throw wbError_("NOT_IMPLEMENTED", "Esta função será ativada na próxima integração.", "action", false);
     default:
       throw wbError_("UNKNOWN_ACTION", "Ação não reconhecida.", "action", false);
   }
@@ -375,6 +374,9 @@ function wbHandleCreateOrder_(request) {
   var briefRecord = wbBriefRecord_("BR-" + orderId, orderId, order, generation, request.requestId);
   wbWriteRecord_("BRIEFS", "Brief_ID", briefRecord.Brief_ID, briefRecord);
   wbCreateOrderVideos_(orderId, order, generation, request.requestId);
+  if (writeResult.created) {
+    wbSendOrderEmail_("order_created", record, { orderId: orderId }, request.requestId + "-ORDER");
+  }
   return { orderId: orderId, created: writeResult.created };
 }
 

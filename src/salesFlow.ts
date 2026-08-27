@@ -4,6 +4,7 @@ import type { AiRateLimitStatus, SafeOrderStatus } from "./apiContracts";
 
 export type BriefInputType = "ready_text" | "idea";
 export type PaymentStatus = "PAYMENT_PENDING" | "PAID" | "FAILED" | "CANCELLED" | "REFUNDED";
+export type PaymentMethod = "PIX" | "Cartão";
 export type OrderStatus =
   | "DRAFT"
   | "PLAN_APPROVED"
@@ -223,6 +224,24 @@ export async function createOrder(
   }
 
   return order;
+}
+
+export async function createPayment(order: OrderRecord, method: PaymentMethod, returnBaseUrl: string) {
+  if (!isRemoteApiConfigured()) {
+    const updated = markOrderPaid(order);
+    return {
+      orderId: updated.orderId,
+      checkoutLink: `${returnBaseUrl}/order-success?order=${encodeURIComponent(updated.orderId)}`,
+      preferenceId: "",
+      paymentStatus: updated.paymentStatus,
+    };
+  }
+
+  return apiRequest("create_payment", {
+    orderId: order.orderId,
+    method,
+    returnBaseUrl,
+  });
 }
 
 export function getOrder(orderId: string | null) {

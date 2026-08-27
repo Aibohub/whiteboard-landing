@@ -9,6 +9,19 @@ function doPost(event) {
       throw wbError_("EMPTY_BODY", "O corpo da solicitação está vazio.", "request", false);
     }
     var request = JSON.parse(event.postData.contents);
+    if (event.parameter && event.parameter.webhook === "mercadopago" && (!request.version || !request.action)) {
+      request = {
+        version: WB_API_VERSION,
+        action: "payment_webhook",
+        requestId: wbWebhookRequestId_(request),
+        sentAt: wbNow_(),
+        payload: {
+          provider: "mercadopago",
+          params: event.parameter || {},
+          body: request
+        }
+      };
+    }
     requestId = request && request.requestId ? String(request.requestId) : "";
     wbAssertRequest_(request);
     return wbJsonOutput_(wbSuccess_(request.requestId, wbDispatch_(request)));
@@ -27,3 +40,9 @@ function wbJsonOutput_(value) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
+function wbWebhookRequestId_(body) {
+  var id = "";
+  if (body && body.data && body.data.id) id = String(body.data.id);
+  if (!id && body && body.id) id = String(body.id);
+  return "MP-WEBHOOK-" + (id || Utilities.getUuid()).replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 80);
+}

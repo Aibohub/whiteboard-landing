@@ -1,8 +1,10 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
 const serverDir = resolve("dist/server");
 const serverEntry = resolve(serverDir, "index.js");
+const indexHtml = resolve("dist/index.html");
+const notFoundHtml = resolve("dist/404.html");
 
 const worker = `export default {
   async fetch(request, env) {
@@ -23,3 +25,4 @@ const worker = `export default {
 
 await mkdir(serverDir, { recursive: true });
 await writeFile(serverEntry, worker, "utf8");
+await copyFile(indexHtml, notFoundHtml);
