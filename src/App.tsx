@@ -500,36 +500,38 @@ function FeaturedCase() {
       <SectionIntro eyebrow="Mini-case" title={featuredCase.title}>
         Um exemplo de como uma mensagem extensa pode virar uma explicação visual clara, sem inventar métricas que não foram medidas.
       </SectionIntro>
-      <div className="case-study-grid">
-        <article>
-          <span>01</span>
-          <h3>Desafio</h3>
-          <p>{featuredCase.challenge}</p>
-        </article>
-        <article>
-          <span>02</span>
-          <h3>Solução</h3>
-          <p>{featuredCase.solution}</p>
-        </article>
-        <article>
-          <span>03</span>
-          <h3>O que foi criado</h3>
-          <p>{featuredCase.created}</p>
-        </article>
-      </div>
-      <div className="case-video-card">
-        <div className="youtube-frame">
-          <iframe
-            src={`https://www.youtube.com/embed/${featuredCase.youtubeId}?rel=0`}
-            title="Mini-case em vídeo whiteboard sobre autoridade local"
-            loading="lazy"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-          />
+      <div className="case-study-body">
+        <div className="case-study-grid">
+          <article>
+            <span>01</span>
+            <h3>Desafio</h3>
+            <p>{featuredCase.challenge}</p>
+          </article>
+          <article>
+            <span>02</span>
+            <h3>Solução</h3>
+            <p>{featuredCase.solution}</p>
+          </article>
+          <article>
+            <span>03</span>
+            <h3>O que foi criado</h3>
+            <p>{featuredCase.created}</p>
+          </article>
         </div>
-        <div className="video-label">
-          <span>Case incorporado</span>
-          <strong>Assista sem sair da página</strong>
+        <div className="case-video-card">
+          <div className="youtube-frame">
+            <iframe
+              src={`https://www.youtube.com/embed/${featuredCase.youtubeId}?rel=0`}
+              title="Mini-case em vídeo whiteboard sobre autoridade local"
+              loading="lazy"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            />
+          </div>
+          <div className="video-label">
+            <span>Case incorporado</span>
+            <strong>Assista sem sair da página</strong>
+          </div>
         </div>
       </div>
       <div className="case-study-footer">
