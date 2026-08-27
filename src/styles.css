@@ -1468,19 +1468,88 @@ li {
   box-shadow: 6px 6px 0 rgba(7, 132, 119, 0.12);
 }
 
-.testimonial-proof-grid span {
+.testimonial-proof-icon {
+  position: relative;
   display: inline-grid;
-  min-width: 42px;
-  height: 40px;
+  width: 46px;
+  height: 46px;
   place-items: center;
   border: 3px solid var(--ink);
-  border-radius: 999px;
+  border-radius: 50%;
   margin-bottom: 12px;
-  background: var(--green);
-  color: #fff;
-  font-family: var(--font-marker);
-  font-weight: 950;
-  padding: 0 10px;
+  background: rgba(7, 132, 119, 0.14);
+}
+
+.testimonial-proof-icon::before,
+.testimonial-proof-icon::after {
+  content: "";
+  position: absolute;
+  display: block;
+}
+
+.testimonial-proof-icon.delivery::before {
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--teal-dark);
+  border-radius: 50%;
+}
+
+.testimonial-proof-icon.delivery::after {
+  width: 10px;
+  height: 10px;
+  border-left: 3px solid var(--teal-dark);
+  border-bottom: 3px solid var(--teal-dark);
+  transform: translate(3px, -2px);
+}
+
+.testimonial-proof-icon.communication::before {
+  width: 28px;
+  height: 20px;
+  border: 3px solid var(--blue);
+  border-radius: 8px;
+}
+
+.testimonial-proof-icon.communication::after {
+  right: 8px;
+  bottom: 11px;
+  width: 9px;
+  height: 9px;
+  border-right: 3px solid var(--blue);
+  border-bottom: 3px solid var(--blue);
+  transform: skew(18deg);
+}
+
+.testimonial-proof-icon.revision::before {
+  width: 28px;
+  height: 22px;
+  border: 3px solid var(--ink);
+  border-radius: 4px;
+  background:
+    linear-gradient(var(--red), var(--red)) 6px 7px / 16px 3px no-repeat,
+    linear-gradient(var(--teal-dark), var(--teal-dark)) 6px 14px / 12px 3px no-repeat;
+}
+
+.testimonial-proof-icon.revision::after {
+  right: 5px;
+  bottom: 6px;
+  width: 17px;
+  height: 6px;
+  border-bottom: 4px solid var(--amber);
+  transform: rotate(-32deg);
+}
+
+.testimonial-proof-icon.result::before {
+  width: 26px;
+  height: 16px;
+  border-left: 4px solid var(--green);
+  border-bottom: 4px solid var(--green);
+  transform: rotate(-45deg) translate(1px, -2px);
+}
+
+.testimonial-proof-icon.result::after {
+  inset: 5px;
+  border: 3px solid var(--amber);
+  border-radius: 50%;
 }
 
 .testimonial-proof-grid h3 {

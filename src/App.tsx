@@ -809,7 +809,7 @@ function ProofSection() {
       <div className="testimonial-proof-grid" aria-label="O que o review comprova">
         {testimonialProofBlocks.map((item) => (
           <article key={item.title}>
-            <span aria-hidden="true">{item.icon}</span>
+            <span className={`testimonial-proof-icon ${item.icon}`} aria-hidden="true" />
             <h3>{item.title}</h3>
             <p>{item.text}</p>
           </article>

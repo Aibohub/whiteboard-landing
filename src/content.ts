@@ -503,22 +503,22 @@ export const founderProof = {
 
 export const testimonialProofBlocks = [
   {
-    icon: "✓",
+    icon: "delivery",
     title: "Entrega no prazo",
     text: "O review confirma que o vídeo foi entregue dentro do combinado, um ponto crítico para campanhas e lançamentos.",
   },
   {
-    icon: "↔",
+    icon: "communication",
     title: "Comunicação clara",
     text: "O cliente destaca acompanhamento durante o processo, reduzindo a insegurança de contratar produção remota.",
   },
   {
-    icon: "REV",
+    icon: "revision",
     title: "Revisões rápidas",
     text: "Ajustes foram tratados de forma objetiva, exatamente o que um negócio precisa para não perder tempo.",
   },
   {
-    icon: "+",
+    icon: "result",
     title: "Resultado acima do esperado",
     text: "O feedback não fala só de entrega técnica: ele reforça qualidade percebida e vontade de contratar novamente.",
   },
