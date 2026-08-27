@@ -343,11 +343,11 @@ export const formatOptions = [
 export const lowTouchSteps = [
   {
     title: "Você envia o básico",
-    text: "Pode ser um texto bruto, link, oferta, áudio curto ou lista de pontos importantes.",
+    text: "Pode ser um texto bruto, um resumo da oferta, fatos importantes ou uma lista de pontos que precisam aparecer.",
   },
   {
     title: "Nós organizamos a mensagem",
-    text: "Transformamos isso em roteiro, gancho, sequência visual e chamada para ação.",
+    text: "Transformamos isso em texto de narração, gancho, ritmo da mensagem e chamada para ação.",
   },
   {
     title: "Você aprova uma vez",
@@ -360,15 +360,36 @@ export const lowTouchSteps = [
 ];
 
 export const useCases = [
-  "Reels educativos para Instagram",
-  "Sequência de vendas por email ou chat",
-  "Explicação curta no site",
-  "Criativos para anúncios",
-  "Follow-up depois do Direct",
-  "Conteúdo entre posts promocionais",
-  "Educação de compradores de imóveis",
-  "Explicação de reserva direta para pousadas",
-  "Etapas, custos e decisões de obra",
+  {
+    title: "Reels, Stories e Shorts",
+    text: "Eduque em poucos segundos antes da pessoa chamar no Direct ou clicar no anúncio.",
+    icon: "play",
+  },
+  {
+    title: "Página de venda",
+    text: "Explique oferta, processo e benefícios quando texto e fotos não bastam.",
+    icon: "page",
+  },
+  {
+    title: "Anúncios pagos",
+    text: "Transforme uma dúvida comum em criativo claro para tráfego e remarketing.",
+    icon: "target",
+  },
+  {
+    title: "Follow-up comercial",
+    text: "Envie uma explicação pronta depois do primeiro contato ou orçamento.",
+    icon: "message",
+  },
+  {
+    title: "Conteúdo educativo",
+    text: "Publique entre posts promocionais para aumentar clareza e confiança.",
+    icon: "board",
+  },
+  {
+    title: "Processos complexos",
+    text: "Mostre etapas, custos, prazos e decisões sem depender de textos longos.",
+    icon: "steps",
+  },
 ];
 
 export const included = [
@@ -429,7 +450,7 @@ export const comparison = [
 export const proofItems = [
   {
     title: "Veja antes de comprar",
-    text: "Assista aos exemplos no YouTube e avalie ritmo, desenho, narração e aplicação por nicho.",
+    text: "Assista aos exemplos na própria página e avalie ritmo, desenho, narração e aplicação por nicho.",
   },
   {
     title: "Aprove antes de produzir",
@@ -465,7 +486,7 @@ export const featuredCase = {
   created:
     "Vídeo whiteboard de aproximadamente 2min24s, com ilustrações e ícones personalizados, animação desenhada à mão, sincronização com a locução e entrega em Full HD.",
   note: "Este caso apresenta o processo e a solução visual. Não são atribuídos resultados comerciais que não tenham sido medidos.",
-  youtubeUrl: "https://www.youtube.com/watch?v=_qE_WoMz5FU",
+  youtubeId: "_qE_WoMz5FU",
 };
 
 export const founderProof = {
@@ -522,7 +543,7 @@ export const proofObjections = [
   {
     icon: "TXT",
     doubt: "Tenho só uma ideia solta",
-    answer: "Você envia texto, áudio ou tópicos. O roteiro e a sequência visual são organizados para aprovação.",
+    answer: "Você envia texto, resumo ou tópicos. O texto de narração e a estrutura da mensagem são organizados para aprovação.",
   },
   {
     icon: "9:16",

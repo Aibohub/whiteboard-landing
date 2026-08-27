@@ -517,11 +517,23 @@ function FeaturedCase() {
           <p>{featuredCase.created}</p>
         </article>
       </div>
+      <div className="case-video-card">
+        <div className="youtube-frame">
+          <iframe
+            src={`https://www.youtube.com/embed/${featuredCase.youtubeId}?rel=0`}
+            title="Mini-case em vídeo whiteboard sobre autoridade local"
+            loading="lazy"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+          />
+        </div>
+        <div className="video-label">
+          <span>Case incorporado</span>
+          <strong>Assista sem sair da página</strong>
+        </div>
+      </div>
       <div className="case-study-footer">
         <p>{featuredCase.note}</p>
-        <a className="secondary-link" href={featuredCase.youtubeUrl} target="_blank" rel="noreferrer">
-          Assistir ao case no YouTube
-        </a>
       </div>
     </section>
   );
@@ -712,9 +724,15 @@ function UseCasesIncluded() {
     <section className="section two-columns">
       <div>
         <SectionIntro eyebrow="Onde usar" title="Um vídeo, vários pontos do funil" />
-        <div className="tag-grid">
+        <div className="use-case-grid">
           {useCases.map((item) => (
-            <span key={item}>{item}</span>
+            <article className="use-case-card" key={item.title}>
+              <span className={`use-case-icon ${item.icon}`} aria-hidden="true" />
+              <div>
+                <h3>{item.title}</h3>
+                <p>{item.text}</p>
+              </div>
+            </article>
           ))}
         </div>
       </div>
