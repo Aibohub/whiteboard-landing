@@ -125,7 +125,7 @@ Success response:
 }
 ```
 
-Mercado Pago sends webhook notifications to the deployed Apps Script URL with `?webhook=mercadopago`.
+Mercado Pago sends webhook notifications to `MERCADO_PAGO_WEBHOOK_URL` when configured. In production this should be the Cloudflare Worker proxy URL; the Worker forwards the request to the deployed Apps Script URL with `?webhook=mercadopago`.
 The webhook payload is not trusted as final payment proof. Apps Script fetches the payment by ID from Mercado Pago and verifies:
 
 - `external_reference` matches an existing `Order_ID`;

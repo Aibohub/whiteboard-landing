@@ -180,7 +180,16 @@ function wbPublicBaseUrl_(candidate) {
 }
 
 function wbWebhookUrl_() {
-  var configured = String(PropertiesService.getScriptProperties().getProperty(WB_WEBAPP_URL_PROPERTY) || "").trim();
+  var properties = PropertiesService.getScriptProperties();
+  var explicitWebhookUrl = String(properties.getProperty(WB_MP_WEBHOOK_URL_PROPERTY) || "").trim();
+  if (explicitWebhookUrl) {
+    var normalizedWebhookUrl = explicitWebhookUrl.replace(/\/$/, "");
+    if (!/^https:\/\//i.test(normalizedWebhookUrl)) {
+      throw wbError_("WEBHOOK_URL_NOT_CONFIGURED", "URL pública do webhook Mercado Pago deve ser HTTPS.", "webhookUrl", false);
+    }
+    return normalizedWebhookUrl;
+  }
+  var configured = String(properties.getProperty(WB_WEBAPP_URL_PROPERTY) || "").trim();
   var serviceUrl = "";
   try {
     serviceUrl = ScriptApp.getService().getUrl();

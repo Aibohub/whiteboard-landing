@@ -108,7 +108,7 @@ globalThis.UrlFetchApp = {
       const payload = JSON.parse(options.payload);
       lastPreferenceOrderId = payload.external_reference;
       lastPreferenceAmount = payload.items[0].unit_price;
-      assert(payload.notification_url.endsWith("?webhook=mercadopago"), "payment preference must include webhook URL");
+      assert(payload.notification_url === "https://mercadopago-webhook-proxy.example.workers.dev", "payment preference must include the configured Mercado Pago webhook URL");
       return {
         getResponseCode: () => 201,
         getContentText: () => JSON.stringify({
@@ -185,6 +185,7 @@ properties.set("LLM_API_KEY", "TEST-KEY");
 properties.set("LLM_MODEL", "gemini-test");
 properties.set("MERCADO_PAGO_ACCESS_TOKEN", "TEST-MP-TOKEN");
 properties.set("MERCADO_PAGO_USE_SANDBOX", "false");
+properties.set("MERCADO_PAGO_WEBHOOK_URL", "https://mercadopago-webhook-proxy.example.workers.dev");
 properties.set("SITE_BASE_URL", "https://aibohub.github.io/whiteboard-landing");
 properties.set("WEBAPP_URL", "https://script.google.com/macros/s/test/exec");
 properties.set("STUDIO_NOTIFICATION_EMAIL", "studio@example.com");

@@ -26,6 +26,7 @@ Add these Script Properties:
 ```text
 MERCADO_PAGO_ACCESS_TOKEN=your_private_access_token
 MERCADO_PAGO_USE_SANDBOX=false
+MERCADO_PAGO_WEBHOOK_URL=https://your-worker.workers.dev/
 SITE_BASE_URL=https://your-public-site.com
 WEBAPP_URL=https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec
 STUDIO_NOTIFICATION_EMAIL=your-contact-email@example.com
@@ -37,7 +38,13 @@ For sandbox tests, use a Mercado Pago test access token and set:
 MERCADO_PAGO_USE_SANDBOX=true
 ```
 
-Webhook URL for Mercado Pago:
+Webhook URL for Mercado Pago should use the Cloudflare Worker proxy when Apps Script redirects are not accepted by Mercado Pago:
+
+```text
+https://your-worker.workers.dev/
+```
+
+The Worker forwards the notification to:
 
 ```text
 https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec?webhook=mercadopago
