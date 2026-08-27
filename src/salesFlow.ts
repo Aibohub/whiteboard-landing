@@ -1,5 +1,5 @@
 import { orderPlans, packages } from "./content";
-import { apiRequest, isRemoteApiConfigured } from "./apiClient";
+import { ApiClientError, apiRequest, isRemoteApiConfigured } from "./apiClient";
 import type { AiRateLimitStatus, SafeOrderStatus } from "./apiContracts";
 
 export type BriefInputType = "ready_text" | "idea";
@@ -228,13 +228,11 @@ export async function createOrder(
 
 export async function createPayment(order: OrderRecord, method: PaymentMethod, returnBaseUrl: string) {
   if (!isRemoteApiConfigured()) {
-    const updated = markOrderPaid(order);
-    return {
-      orderId: updated.orderId,
-      checkoutLink: `${returnBaseUrl}/order-success?order=${encodeURIComponent(updated.orderId)}`,
-      preferenceId: "",
-      paymentStatus: updated.paymentStatus,
-    };
+    throw new ApiClientError(
+      "Pagamento online indisponível no momento. Tente novamente em alguns instantes.",
+      "PAYMENT_API_NOT_CONFIGURED",
+      true,
+    );
   }
 
   return apiRequest("create_payment", {
