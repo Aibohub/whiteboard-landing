@@ -1854,17 +1854,37 @@ function renderChatInline(text: string) {
 }
 
 function normalizeAssistantText(content: string) {
-  const lines = content
+  const rawLines = content
     .replace(/\r\n/g, "\n")
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean);
+  const lines: string[] = [];
+  let characterRun = "";
+
+  for (const line of rawLines) {
+    if (/^[\p{L}\p{N}]$/u.test(line)) {
+      characterRun += line;
+      continue;
+    }
+
+    if (characterRun) {
+      lines.push(characterRun);
+      characterRun = "";
+    }
+    lines.push(line);
+  }
+
+  if (characterRun) {
+    lines.push(characterRun);
+  }
+
   const normalized: string[] = [];
   let paragraph: string[] = [];
 
   const flushParagraph = () => {
     if (!paragraph.length) return;
-    normalized.push(paragraph.join(" "));
+    normalized.push(paragraph.join(" ").replace(/\s+([,.!?;:])/g, "$1"));
     paragraph = [];
   };
 
@@ -1906,7 +1926,7 @@ function ChatMessageContent({ content }: { content: string }) {
         return (
           <span className={`chat-line ${bullet ? "bullet" : ""}`} key={`${line}-${index}`}>
             {bullet && <span aria-hidden="true">•</span>}
-            {cleanLine ? renderChatInline(cleanLine) : <br />}
+            <span className="chat-line-text">{cleanLine ? renderChatInline(cleanLine) : <br />}</span>
           </span>
         );
       })}

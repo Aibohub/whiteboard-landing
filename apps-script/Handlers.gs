@@ -216,11 +216,20 @@ function wbHandleChat_(request) {
   wbAssertAiRateLimit_("chat", sessionId, 12, 60, request.requestId);
   wbWriteChatLog_(sessionId, "user", message, orderId, email, request.requestId + "-U");
 
+  var isRussian = /[А-Яа-яЁё]/.test(message);
   var statusIntent = /\b(status|pedido|entrega|pagamento|order)\b/i.test(message);
   var monthlyScriptsIntent = /((outros|restantes|demais)\s+(3|7|três|sete)?\s*(roteiros|scripts|cenários))|((4|8|quatro|oito)\s+vídeos[\s\S]{0,80}(roteiros|scripts|cenários))/i.test(message);
+  var durationIntent = /(duraç|durac|duração|30|60|120|segundos|длительн|секунд|выбрать.*ролик|какой.*ролик)/i.test(message);
+  var paymentGuaranteeIntent = /(pagamento|garantia|garantias|mercado pago|pix|cartão|cartao|оплат|гарант|защит|безопасн)/i.test(message);
   var deterministicAnswer = "";
   if (monthlyScriptsIntent) {
-    deterministicAnswer = "Antes do pagamento, você vê todos os temas do mês e o texto de narração completo do vídeo 1. Os títulos e objetivos mostram sobre o que serão os outros vídeos e podem ser editados agora. Para liberar os outros 3 ou 7 textos completos, aprove os temas e o primeiro VO e conclua o checkout. Após a confirmação do pagamento, eles serão gerados dentro do mesmo pedido e ficarão disponíveis para revisão com seu Order ID e email.";
+    deterministicAnswer = isRussian
+      ? "До оплаты вы видите все темы месяца и полный текст озвучки для первого видео. Названия и цели показывают, о чем будут остальные ролики, и их можно отредактировать до checkout. Остальные 3 или 7 VO-текстов создаются после подтверждения оплаты внутри того же Order ID и будут доступны для проверки по Order ID и email."
+      : "Antes do pagamento, você vê todos os temas do mês e o texto de narração completo do vídeo 1. Os títulos e objetivos mostram sobre o que serão os outros vídeos e podem ser editados agora. Para liberar os outros 3 ou 7 textos completos, aprove os temas e o primeiro VO e conclua o checkout. Após a confirmação do pagamento, eles serão gerados dentro do mesmo pedido e ficarão disponíveis para revisão com seu Order ID e email.";
+  } else if (durationIntent) {
+    deterministicAnswer = isRussian
+      ? "Выбор длительности зависит от объема сообщения. 30 секунд подходят для одной простой идеи, объявления, Reels или короткого ответа на частый вопрос. 60 секунд лучше, если нужно объяснить проблему, решение и призыв к действию. 120 секунд подходят для процесса, услуги с этапами, обучающего ролика или более сложного предложения. Если сомневаетесь, для первого теста обычно безопаснее выбрать 30 или 60 секунд."
+      : "A escolha da duração depende da quantidade de informação que você precisa transmitir. 30 segundos funciona para uma ideia simples, anúncio, Reels ou resposta curta a uma dúvida frequente. 60 segundos é melhor quando você precisa explicar problema, solução e chamada para ação. 120 segundos combina com processo, serviço por etapas, tutorial ou oferta mais completa. Se estiver em dúvida, para o primeiro teste normalmente é mais seguro escolher 30 ou 60 segundos.";
   } else if (statusIntent && orderId && email) {
     var order = wbFindRecord_("ORDERS", "Order_ID", orderId);
     deterministicAnswer = !order || String(order.Email).toLowerCase() !== email
@@ -234,6 +243,10 @@ function wbHandleChat_(request) {
         ].join(" ");
   } else if (statusIntent && (orderId || email)) {
     deterministicAnswer = "Para consultar com privacidade, preciso do Order ID e do mesmo email usado no pedido. Você também pode usar o formulário de status na página de suporte.";
+  } else if (paymentGuaranteeIntent) {
+    deterministicAnswer = isRussian
+      ? "Оплата проходит через Mercado Pago: доступны PIX и банковские карты. Сначала вы заполняете brief, проверяете и утверждаете текст озвучки, и только после этого переходите к оплате. После checkout создается Order ID, по которому можно отслеживать заказ вместе с тем же email. Мы не обещаем вирусность или гарантированные продажи; гарантия процесса в том, что цена, формат, срок, текст и порядок правок фиксируются до производства."
+      : "O pagamento passa pelo Mercado Pago, com PIX e cartões. Primeiro você preenche o brief, revisa e aprova o texto de narração; só depois segue para o checkout. Após o checkout, o pedido recebe um Order ID para acompanhamento com o mesmo email informado. Eu não prometo viralização ou vendas garantidas. A segurança está no processo: preço, formato, prazo, texto e política de ajustes ficam claros antes da produção.";
   }
 
   var answer = deterministicAnswer;
